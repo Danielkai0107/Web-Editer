@@ -2,15 +2,20 @@ import { createClient } from "@supabase/supabase-js";
 import { generateStaticHTML } from "@/lib/html-generator";
 import { NextResponse } from "next/server";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ subdomain: string }> }
 ) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    return new NextResponse("Server configuration error", {
+      status: 503,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+
+  const supabase = createClient(url, key);
   const { subdomain } = await params;
 
   const { data: site } = await supabase
