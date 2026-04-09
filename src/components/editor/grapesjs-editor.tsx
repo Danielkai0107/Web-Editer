@@ -338,6 +338,7 @@ export default function GrapesEditor({
       }
 
       const wrapper = editor.getWrapper();
+      if (!wrapper) return;
       wrapper.set({ droppable: true });
       wrapper.components().forEach((c: any) => lockComponentTree(c));
 
