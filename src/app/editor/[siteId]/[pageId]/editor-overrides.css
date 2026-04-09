@@ -1,0 +1,167 @@
+/* Editor background */
+.gjs-editor {
+  background-color: #E5E7EB !important;
+  border: none !important;
+}
+
+/* Force canvas to fill full editor area */
+.gjs-cv-canvas {
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Center frame-wrapper via margin auto */
+.gjs-frame-wrapper {
+  left: 0 !important;
+  right: 0 !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+/* Hide default GrapesJS panels we replaced with custom UI */
+.gjs-pn-panels,
+.gjs-pn-views-container {
+  display: none !important;
+}
+
+.gjs-cv-canvas .gjs-frame {
+  border: none;
+}
+
+/* Component selection — only top-level sections */
+.gjs-selected {
+  outline: 2px solid #086CF2 !important;
+  outline-offset: -1px;
+}
+
+.gjs-hovered {
+  outline: 1px dashed rgba(8, 108, 242, 0.4) !important;
+  outline-offset: -1px;
+}
+
+/* Hide toolbar by default; only show for top-level sections with our custom buttons */
+.gjs-toolbar:not(:has(.gjs-toolbar-move)) {
+  display: none !important;
+}
+
+/* Component toolbar — horizontal, centered below section */
+.gjs-toolbar:has(.gjs-toolbar-move) {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 2px !important;
+  background: #0A0E1A !important;
+  border-radius: 8px !important;
+  padding: 3px !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18) !important;
+  bottom: -38px !important;
+  top: auto !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: auto !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+}
+
+.gjs-toolbar .gjs-toolbar-item {
+  width: 28px !important;
+  min-width: 28px !important;
+  height: 28px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 6px !important;
+  color: #fff !important;
+  transition: background 0.15s !important;
+  font-size: 0 !important;
+  float: none !important;
+  margin: 0 !important;
+}
+
+.gjs-toolbar .gjs-toolbar-item:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.gjs-toolbar .gjs-toolbar-move {
+  cursor: grab !important;
+}
+
+.gjs-toolbar .gjs-toolbar-move::before {
+  content: "⠿";
+  font-size: 16px;
+  line-height: 1;
+}
+
+.gjs-toolbar .gjs-toolbar-delete {
+  cursor: pointer !important;
+}
+
+.gjs-toolbar .gjs-toolbar-delete::before {
+  content: "✕";
+  font-size: 13px;
+  line-height: 1;
+}
+
+.gjs-toolbar .gjs-toolbar-delete:hover {
+  background: rgba(248, 113, 113, 0.3) !important;
+  color: #FCA5A5 !important;
+}
+
+/* Badges — hide them to keep canvas clean */
+.gjs-badge {
+  display: none !important;
+}
+
+/* RTE toolbar for text editing */
+.gjs-rte-toolbar {
+  background: #0A0E1A;
+  border-radius: 8px;
+  padding: 4px;
+  border: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.gjs-rte-action {
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.gjs-rte-action:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.gjs-rte-active {
+  background: #086CF2;
+}
+
+/* Preview mode: clean canvas, no outlines */
+.gjs-editor.gjs-editor-cont.gjs-preview-mode .gjs-selected,
+.gjs-editor.gjs-editor-cont.gjs-preview-mode .gjs-hovered {
+  outline: none !important;
+}
+
+/* Placeholder / sorter highlight during drag reorder */
+.gjs-placeholder {
+  border: 2px dashed #086CF2 !important;
+  background: rgba(8, 108, 242, 0.06) !important;
+  min-height: 40px !important;
+  border-radius: 8px !important;
+  transition: all 0.15s ease !important;
+}
+
+/* Dragging state — dim the element being moved */
+.gjs-freezed {
+  opacity: 0.4 !important;
+}
+
+/* Hide resizer handles since structure is locked */
+.gjs-resizer-h {
+  display: none !important;
+}

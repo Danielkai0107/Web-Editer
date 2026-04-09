@@ -1,65 +1,33 @@
-import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-bg-base px-4">
+      <div className="text-center max-w-xl">
+        <div className="w-14 h-14 rounded-[var(--radius-card)] bg-accent flex items-center justify-center mx-auto mb-6">
+          <span className="text-white font-bold text-xl">SF</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-3">
+          SiteForge
+        </h1>
+        <p className="text-text-secondary text-lg mb-8">
+          {"\u53f0\u7063\u54c1\u724c\u5c08\u5c6c\u7684\u975c\u614b\u5b98\u7db2\u5efa\u7ad9\u5de5\u5177\u3002\u7e41\u9ad4\u4e2d\u6587\u6392\u7248\u512a\u5316\uff0c\u6b50\u7f8e\u7c21\u7d04\u8cea\u611f\u7248\u578b\u3002"}
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center h-12 px-6 text-base font-medium text-white bg-accent rounded-[var(--radius-input)] hover:bg-accent/90 transition-colors"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            {"\u767b\u5165"}
+          </Link>
+          <Link
+            href="/register"
+            className="inline-flex items-center justify-center h-12 px-6 text-base font-medium text-text-primary bg-bg-card border border-border-strong rounded-[var(--radius-input)] hover:bg-bg-card-elevated transition-colors"
           >
-            Documentation
-          </a>
+            {"\u514d\u8cbb\u8a3b\u518a"}
+          </Link>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
