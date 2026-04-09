@@ -26,6 +26,7 @@ import {
   ChevronDown,
   RefreshCw,
   Link2,
+  Type,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -55,10 +56,77 @@ interface SectionLink {
   text: string;
   href: string;
   isButton: boolean;
+  textColor: string;
+  bgColor: string;
+}
+
+interface SectionText {
+  componentId: string;
+  label: string;
+  fontFamily: string;
+  fontSize: number;
+  color: string;
 }
 
 const DRAG_TYPE_LAYER = "application/x-layer-idx";
 const DRAG_TYPE_BLOCK = "application/x-block-id";
+
+const GOOGLE_FONTS = [
+  { label: "DM Sans", value: "'DM Sans', sans-serif" },
+  { label: "Noto Sans TC", value: "'Noto Sans TC', sans-serif" },
+  { label: "Noto Serif TC", value: "'Noto Serif TC', serif" },
+  { label: "DM Mono", value: "'DM Mono', monospace" },
+  { label: "Inter", value: "'Inter', sans-serif" },
+  { label: "Poppins", value: "'Poppins', sans-serif" },
+  { label: "Playfair Display", value: "'Playfair Display', serif" },
+  { label: "Lato", value: "'Lato', sans-serif" },
+  { label: "Montserrat", value: "'Montserrat', sans-serif" },
+  { label: "Open Sans", value: "'Open Sans', sans-serif" },
+  { label: "Raleway", value: "'Raleway', sans-serif" },
+];
+
+const GOOGLE_FONTS_URL =
+  "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@400;700&family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Playfair+Display:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;600;700&family=Raleway:wght@400;500;600;700&display=swap";
+
+function rgbToHex(rgb: string): string {
+  if (!rgb || rgb === "transparent" || rgb.includes("rgba(0, 0, 0, 0)")) return "";
+  if (rgb.startsWith("#")) return rgb;
+  const match = rgb.match(/(\d+),\s*(\d+),\s*(\d+)/);
+  if (!match) return "";
+  const r = parseInt(match[1]);
+  const g = parseInt(match[2]);
+  const b = parseInt(match[3]);
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+}
+
+function hexToRgba(hex: string, alpha: number): string {
+  let h = hex.replace("#", "");
+  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  const r = parseInt(h.slice(0, 2), 16) || 0;
+  const g = parseInt(h.slice(2, 4), 16) || 0;
+  const b = parseInt(h.slice(4, 6), 16) || 0;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function parseBgOverlay(bgImage: string): { overlayColor: string; overlayOpacity: number } {
+  const match = bgImage.match(/linear-gradient\(\s*rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+  if (!match) return { overlayColor: "#000000", overlayOpacity: 0 };
+  const r = parseInt(match[1]);
+  const g = parseInt(match[2]);
+  const b = parseInt(match[3]);
+  return {
+    overlayColor: `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`,
+    overlayOpacity: parseFloat(match[4]),
+  };
+}
+
+function matchFontFamily(computed: string): string {
+  const lower = computed.toLowerCase().replace(/['"]/g, "");
+  for (const f of GOOGLE_FONTS) {
+    if (lower.includes(f.label.toLowerCase())) return f.value;
+  }
+  return "";
+}
 
 export default function GrapesEditor({
   siteId,
@@ -84,6 +152,9 @@ export default function GrapesEditor({
   const [sectionPaddingBottom, setSectionPaddingBottom] = useState<number>(100);
   const [sectionImages, setSectionImages] = useState<SectionImages[]>([]);
   const [sectionLinks, setSectionLinks] = useState<SectionLink[]>([]);
+  const [sectionTexts, setSectionTexts] = useState<SectionText[]>([]);
+  const [sectionOverlayColor, setSectionOverlayColor] = useState<string>("#000000");
+  const [sectionOverlayOpacity, setSectionOverlayOpacity] = useState<number>(0);
 
   // Media picker
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
@@ -206,6 +277,10 @@ export default function GrapesEditor({
     const urlMatch = bgImg.match(/url\(["']?([^"')]+)["']?\)/);
     setSectionBgImage(urlMatch ? urlMatch[1] : "");
 
+    const overlay = parseBgOverlay(bgImg);
+    setSectionOverlayColor(overlay.overlayColor);
+    setSectionOverlayOpacity(overlay.overlayOpacity);
+
     const pt = parseInt(styles["padding-top"] || "100", 10);
     const pb = parseInt(styles["padding-bottom"] || "100", 10);
     setSectionPaddingTop(isNaN(pt) ? 100 : pt);
@@ -213,25 +288,60 @@ export default function GrapesEditor({
 
     const images: SectionImages[] = [];
     const links: SectionLink[] = [];
+    const texts: SectionText[] = [];
     function findElements(comp: any) {
       const tag = (comp.get("tagName") || "").toLowerCase();
+      const attrs = comp.getAttributes() || {};
       if (tag === "img") {
         images.push({
           componentId: comp.getId(),
-          src: comp.getAttributes().src || "",
+          src: attrs.src || "",
         });
-      }
-      if (tag === "a") {
-        const attrs = comp.getAttributes();
+      } else if (tag === "a") {
         const el = comp.getEl();
         const text = el?.textContent?.trim() || attrs["data-editable"] || "連結";
         const classList = attrs.class || "";
         const isButton = /btn|button|cta/i.test(classList);
+        const compStyles = comp.getStyle();
+        let textColor = compStyles.color || "";
+        let bgColor = compStyles["background-color"] || compStyles.background || "";
+        if (el) {
+          const win = el.ownerDocument?.defaultView;
+          if (win) {
+            const cs = win.getComputedStyle(el);
+            if (!textColor) textColor = rgbToHex(cs.color);
+            if (!bgColor) bgColor = rgbToHex(cs.backgroundColor);
+          }
+        }
         links.push({
           componentId: comp.getId(),
           text: text.substring(0, 20),
           href: attrs.href || "#",
           isButton,
+          textColor: textColor || "#ffffff",
+          bgColor: bgColor || "",
+        });
+      } else if (attrs["data-editable"]) {
+        const el = comp.getEl();
+        const compStyles = comp.getStyle();
+        let fontFamily = compStyles["font-family"] || "";
+        let fontSize = parseInt(compStyles["font-size"] || "0", 10);
+        let color = compStyles.color || "";
+        if (el) {
+          const win = el.ownerDocument?.defaultView;
+          if (win) {
+            const cs = win.getComputedStyle(el);
+            if (!fontFamily) fontFamily = matchFontFamily(cs.fontFamily);
+            if (!fontSize) fontSize = parseInt(cs.fontSize || "16", 10);
+            if (!color) color = rgbToHex(cs.color);
+          }
+        }
+        texts.push({
+          componentId: comp.getId(),
+          label: attrs["data-editable"],
+          fontFamily: fontFamily || GOOGLE_FONTS[0].value,
+          fontSize: fontSize || 16,
+          color: color || "#0A0E1A",
         });
       }
       comp.components().forEach((c: any) => findElements(c));
@@ -239,6 +349,7 @@ export default function GrapesEditor({
     findElements(target);
     setSectionImages(images);
     setSectionLinks(links);
+    setSectionTexts(texts);
   }
 
   function refreshSelectedSection() {
@@ -301,7 +412,7 @@ export default function GrapesEditor({
         },
         canvas: {
           styles: [
-            "https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@400;700&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap",
+            GOOGLE_FONTS_URL,
           ],
         },
         blockManager: { custom: true },
@@ -518,8 +629,13 @@ export default function GrapesEditor({
     if (mediaPickerTarget.type === "bg" && selectedSectionId) {
       const comp = findComponentById(editor, selectedSectionId);
       if (comp) {
+        let bgValue = `url(${url})`;
+        if (sectionOverlayOpacity > 0) {
+          const rgba = hexToRgba(sectionOverlayColor, sectionOverlayOpacity);
+          bgValue = `linear-gradient(${rgba}, ${rgba}), ${bgValue}`;
+        }
         comp.addStyle({
-          "background-image": `url(${url})`,
+          "background-image": bgValue,
           "background-size": "cover",
           "background-position": "center",
         });
@@ -555,6 +671,85 @@ export default function GrapesEditor({
     if (comp) {
       comp.addStyle({ "background-image": "none" });
       setSectionBgImage("");
+      setSectionOverlayColor("#000000");
+      setSectionOverlayOpacity(0);
+    }
+  }
+
+  function handleOverlayChange(color: string, opacity: number) {
+    setSectionOverlayColor(color);
+    setSectionOverlayOpacity(opacity);
+    const editor = editorRef.current;
+    if (!editor || !selectedSectionId || !sectionBgImage) return;
+    const comp = findComponentById(editor, selectedSectionId);
+    if (!comp) return;
+    if (opacity <= 0) {
+      comp.addStyle({ "background-image": `url(${sectionBgImage})` });
+    } else {
+      const rgba = hexToRgba(color, opacity);
+      comp.addStyle({
+        "background-image": `linear-gradient(${rgba}, ${rgba}), url(${sectionBgImage})`,
+      });
+    }
+  }
+
+  function handleTextFontChange(componentId: string, fontFamily: string) {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const comp = findComponentById(editor, componentId);
+    if (comp) {
+      comp.addStyle({ "font-family": fontFamily });
+      setSectionTexts((prev) =>
+        prev.map((t) => (t.componentId === componentId ? { ...t, fontFamily } : t))
+      );
+    }
+  }
+
+  function handleTextSizeChange(componentId: string, fontSize: number) {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const comp = findComponentById(editor, componentId);
+    if (comp) {
+      comp.addStyle({ "font-size": `${fontSize}px` });
+      setSectionTexts((prev) =>
+        prev.map((t) => (t.componentId === componentId ? { ...t, fontSize } : t))
+      );
+    }
+  }
+
+  function handleTextColorChange(componentId: string, color: string) {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const comp = findComponentById(editor, componentId);
+    if (comp) {
+      comp.addStyle({ color });
+      setSectionTexts((prev) =>
+        prev.map((t) => (t.componentId === componentId ? { ...t, color } : t))
+      );
+    }
+  }
+
+  function handleButtonTextColorChange(componentId: string, color: string) {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const comp = findComponentById(editor, componentId);
+    if (comp) {
+      comp.addStyle({ color });
+      setSectionLinks((prev) =>
+        prev.map((l) => (l.componentId === componentId ? { ...l, textColor: color } : l))
+      );
+    }
+  }
+
+  function handleButtonBgColorChange(componentId: string, color: string) {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const comp = findComponentById(editor, componentId);
+    if (comp) {
+      comp.addStyle({ "background-color": color, background: color });
+      setSectionLinks((prev) =>
+        prev.map((l) => (l.componentId === componentId ? { ...l, bgColor: color } : l))
+      );
     }
   }
 
@@ -953,6 +1148,15 @@ export default function GrapesEditor({
               onImageReset={handleImageReset}
               links={sectionLinks}
               onLinkChange={handleLinkChange}
+              texts={sectionTexts}
+              onTextFontChange={handleTextFontChange}
+              onTextSizeChange={handleTextSizeChange}
+              onTextColorChange={handleTextColorChange}
+              overlayColor={sectionOverlayColor}
+              overlayOpacity={sectionOverlayOpacity}
+              onOverlayChange={handleOverlayChange}
+              onButtonTextColorChange={handleButtonTextColorChange}
+              onButtonBgColorChange={handleButtonBgColorChange}
             />
           </div>
         )}
@@ -1191,6 +1395,15 @@ function RightPanel({
   onImageReset,
   links,
   onLinkChange,
+  texts,
+  onTextFontChange,
+  onTextSizeChange,
+  onTextColorChange,
+  overlayColor,
+  overlayOpacity,
+  onOverlayChange,
+  onButtonTextColorChange,
+  onButtonBgColorChange,
 }: {
   bgColor: string;
   bgImage: string;
@@ -1206,18 +1419,94 @@ function RightPanel({
   onImageReset: (id: string) => void;
   links: SectionLink[];
   onLinkChange: (componentId: string, href: string) => void;
+  texts: SectionText[];
+  onTextFontChange: (componentId: string, fontFamily: string) => void;
+  onTextSizeChange: (componentId: string, fontSize: number) => void;
+  onTextColorChange: (componentId: string, color: string) => void;
+  overlayColor: string;
+  overlayOpacity: number;
+  onOverlayChange: (color: string, opacity: number) => void;
+  onButtonTextColorChange: (componentId: string, color: string) => void;
+  onButtonBgColorChange: (componentId: string, color: string) => void;
 }) {
   return (
     <div className="p-4 space-y-6">
       <p className="text-xs font-medium text-text-muted uppercase tracking-wider">
-        {"\u5340\u584a\u8a2d\u5b9a"}
+        {"區塊設定"}
       </p>
+
+      {/* Text styling */}
+      {texts.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-text-secondary mb-2 flex items-center gap-1.5">
+            <Type className="w-3.5 h-3.5" />
+            {"文字樣式"}
+          </p>
+          <div className="space-y-2.5">
+            {texts.map((t) => (
+              <div
+                key={t.componentId}
+                className="space-y-1.5 p-2.5 rounded-xl bg-bg-base border border-border"
+              >
+                <p className="text-[10px] font-medium text-text-muted uppercase tracking-wide">
+                  {t.label}
+                </p>
+                <select
+                  value={t.fontFamily}
+                  onChange={(e) => onTextFontChange(t.componentId, e.target.value)}
+                  className="w-full h-8 px-2 text-xs rounded-lg border border-border bg-white text-text-primary focus:outline-none focus:ring-1 focus:ring-accent/30 cursor-pointer"
+                >
+                  {GOOGLE_FONTS.map((f) => (
+                    <option key={f.value} value={f.value}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-2 items-center">
+                  <div className="w-16 shrink-0">
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min={10}
+                        max={120}
+                        value={t.fontSize}
+                        onChange={(e) =>
+                          onTextSizeChange(t.componentId, Number(e.target.value))
+                        }
+                        className="w-full h-8 px-2 pr-6 text-xs font-mono rounded-lg border border-border bg-white text-text-primary focus:outline-none focus:ring-1 focus:ring-accent/30"
+                      />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-text-muted pointer-events-none">
+                        px
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                    <input
+                      type="color"
+                      value={t.color || "#000000"}
+                      onChange={(e) => onTextColorChange(t.componentId, e.target.value)}
+                      className="w-8 h-8 rounded-lg border border-border cursor-pointer shrink-0 p-0.5"
+                    />
+                    <input
+                      type="text"
+                      value={t.color}
+                      onChange={(e) => onTextColorChange(t.componentId, e.target.value)}
+                      placeholder="#000000"
+                      className="w-full h-8 px-2 text-xs font-mono rounded-lg border border-border bg-white text-text-primary focus:outline-none focus:ring-1 focus:ring-accent/30 min-w-0"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Background color */}
       <div>
         <p className="text-xs font-semibold text-text-secondary mb-2 flex items-center gap-1.5">
           <Palette className="w-3.5 h-3.5" />
-          {"\u80cc\u666f\u8272"}
+          {"背景色"}
         </p>
         <div className="grid grid-cols-5 gap-2 mb-2">
           {presetColors.map((c) => (
@@ -1248,30 +1537,62 @@ function RightPanel({
       <div>
         <p className="text-xs font-semibold text-text-secondary mb-2 flex items-center gap-1.5">
           <ImageIcon className="w-3.5 h-3.5" />
-          {"\u80cc\u666f\u5716"}
+          {"背景圖"}
         </p>
         {bgImage ? (
-          <div className="rounded-xl border border-border overflow-hidden bg-bg-base">
-            <div className="aspect-video relative group">
-              <img
-                src={bgImage}
-                alt=""
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                <button
-                  onClick={onBgImageClick}
-                  className="px-3 py-1.5 bg-white rounded-lg text-xs font-medium text-[#0A0E1A] shadow-sm hover:bg-[#F0F4FF] transition-colors flex items-center gap-1"
-                >
-                  <RefreshCw className="w-3 h-3" />
-                  {"\u66ff\u63db"}
-                </button>
-                <button
-                  onClick={onBgImageReset}
-                  className="p-1.5 bg-white rounded-lg shadow-sm hover:bg-[#FEE2E2] transition-colors"
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-[#F87171]" />
-                </button>
+          <div className="space-y-3">
+            <div className="rounded-xl border border-border overflow-hidden bg-bg-base">
+              <div className="aspect-video relative group">
+                <img
+                  src={bgImage}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                  <button
+                    onClick={onBgImageClick}
+                    className="px-3 py-1.5 bg-white rounded-lg text-xs font-medium text-[#0A0E1A] shadow-sm hover:bg-[#F0F4FF] transition-colors flex items-center gap-1"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    {"替換"}
+                  </button>
+                  <button
+                    onClick={onBgImageReset}
+                    className="p-1.5 bg-white rounded-lg shadow-sm hover:bg-[#FEE2E2] transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-[#F87171]" />
+                  </button>
+                </div>
+              </div>
+            </div>
+            {/* Overlay controls */}
+            <div className="p-2.5 rounded-xl bg-bg-base border border-border space-y-2">
+              <p className="text-[10px] font-medium text-text-muted uppercase tracking-wide">
+                {"遮罩"}
+              </p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={overlayColor}
+                  onChange={(e) => onOverlayChange(e.target.value, overlayOpacity)}
+                  className="w-8 h-8 rounded-lg border border-border cursor-pointer shrink-0 p-0.5"
+                />
+                <div className="flex-1">
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={Math.round(overlayOpacity * 100)}
+                    onChange={(e) =>
+                      onOverlayChange(overlayColor, Number(e.target.value) / 100)
+                    }
+                    className="w-full h-1.5 rounded-full appearance-none bg-border accent-accent cursor-pointer"
+                  />
+                </div>
+                <span className="text-xs font-mono text-text-muted w-9 text-right shrink-0">
+                  {Math.round(overlayOpacity * 100)}%
+                </span>
               </div>
             </div>
           </div>
@@ -1282,7 +1603,7 @@ function RightPanel({
           >
             <ImageIcon className="w-5 h-5 text-text-muted" />
             <span className="text-xs text-text-muted">
-              {"\u9ede\u64ca\u9078\u64c7\u5716\u7247"}
+              {"點擊選擇圖片"}
             </span>
           </button>
         )}
@@ -1293,7 +1614,7 @@ function RightPanel({
         <div>
           <p className="text-xs font-semibold text-text-secondary mb-2 flex items-center gap-1.5">
             <ImageIcon className="w-3.5 h-3.5" />
-            {"\u5340\u584a\u5716\u7247"}
+            {"區塊圖片"}
           </p>
           <div className="space-y-2">
             {images.map((img, idx) => (
@@ -1313,7 +1634,7 @@ function RightPanel({
                       className="px-3 py-1.5 bg-white rounded-lg text-xs font-medium text-[#0A0E1A] shadow-sm hover:bg-[#F0F4FF] transition-colors flex items-center gap-1"
                     >
                       <RefreshCw className="w-3 h-3" />
-                      {"\u66ff\u63db"}
+                      {"替換"}
                     </button>
                     <button
                       onClick={() => onImageReset(img.componentId)}
@@ -1325,7 +1646,7 @@ function RightPanel({
                 </div>
                 <div className="px-2.5 py-1.5">
                   <p className="text-[10px] text-text-muted truncate">
-                    {"\u5716\u7247"} {idx + 1}
+                    {"圖片"} {idx + 1}
                   </p>
                 </div>
               </div>
@@ -1343,7 +1664,10 @@ function RightPanel({
           </p>
           <div className="space-y-2.5">
             {links.map((link) => (
-              <div key={link.componentId} className="space-y-1">
+              <div
+                key={link.componentId}
+                className="space-y-1.5 p-2.5 rounded-xl bg-bg-base border border-border"
+              >
                 <div className="flex items-center gap-1.5">
                   <span
                     className={cn(
@@ -1364,8 +1688,56 @@ function RightPanel({
                   value={link.href}
                   onChange={(e) => onLinkChange(link.componentId, e.target.value)}
                   placeholder="https://example.com"
-                  className="w-full h-8 px-2 text-xs font-mono rounded-lg border border-border bg-bg-base text-text-primary focus:outline-none focus:ring-1 focus:ring-accent/30"
+                  className="w-full h-8 px-2 text-xs font-mono rounded-lg border border-border bg-white text-text-primary focus:outline-none focus:ring-1 focus:ring-accent/30"
                 />
+                {link.isButton && (
+                  <div className="flex gap-2 pt-1">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] text-text-muted mb-1">{"文字色"}</p>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="color"
+                          value={link.textColor || "#ffffff"}
+                          onChange={(e) =>
+                            onButtonTextColorChange(link.componentId, e.target.value)
+                          }
+                          className="w-7 h-7 rounded border border-border cursor-pointer shrink-0 p-0.5"
+                        />
+                        <input
+                          type="text"
+                          value={link.textColor}
+                          onChange={(e) =>
+                            onButtonTextColorChange(link.componentId, e.target.value)
+                          }
+                          placeholder="#ffffff"
+                          className="w-full h-7 px-1.5 text-[10px] font-mono rounded border border-border bg-white text-text-primary focus:outline-none focus:ring-1 focus:ring-accent/30 min-w-0"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] text-text-muted mb-1">{"背景色"}</p>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="color"
+                          value={link.bgColor || "#086CF2"}
+                          onChange={(e) =>
+                            onButtonBgColorChange(link.componentId, e.target.value)
+                          }
+                          className="w-7 h-7 rounded border border-border cursor-pointer shrink-0 p-0.5"
+                        />
+                        <input
+                          type="text"
+                          value={link.bgColor}
+                          onChange={(e) =>
+                            onButtonBgColorChange(link.componentId, e.target.value)
+                          }
+                          placeholder="#086CF2"
+                          className="w-full h-7 px-1.5 text-[10px] font-mono rounded border border-border bg-white text-text-primary focus:outline-none focus:ring-1 focus:ring-accent/30 min-w-0"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -1375,12 +1747,12 @@ function RightPanel({
       {/* Padding */}
       <div>
         <p className="text-xs font-semibold text-text-secondary mb-3">
-          {"\u9593\u8ddd"}
+          {"間距"}
         </p>
         <div className="space-y-3">
           <div>
             <div className="flex justify-between text-xs text-text-muted mb-1">
-              <span>{"\u4e0a\u65b9"}</span>
+              <span>{"上方"}</span>
               <span>{paddingTop}px</span>
             </div>
             <input
@@ -1395,7 +1767,7 @@ function RightPanel({
           </div>
           <div>
             <div className="flex justify-between text-xs text-text-muted mb-1">
-              <span>{"\u4e0b\u65b9"}</span>
+              <span>{"下方"}</span>
               <span>{paddingBottom}px</span>
             </div>
             <input
