@@ -51,9 +51,6 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-bg-base px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-[var(--radius-card)] bg-accent flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-lg">SF</span>
-          </div>
           <h1 className="text-2xl font-bold text-text-primary">{"\u5efa\u7acb\u5e33\u865f"}</h1>
           <p className="text-sm text-text-secondary mt-1">{"\u514d\u8cbb\u958b\u59cb\uff0c\u96a8\u6642\u5347\u7d1a"}</p>
         </div>

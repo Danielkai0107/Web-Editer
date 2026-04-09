@@ -84,10 +84,12 @@ export function Sidebar({ collapsed, onToggle, variant = "dashboard" }: SidebarP
         collapsed ? "w-[var(--spacing-sidebar-collapsed)]" : "w-[var(--spacing-sidebar)]"
       )}
     >
-      <div className="flex items-center gap-3 px-5 h-[var(--spacing-topbar)] border-b border-border shrink-0">
-        <div className="w-8 h-8 rounded-[var(--radius-input)] bg-accent flex items-center justify-center shrink-0">
-          <span className="text-white font-bold text-sm">SF</span>
-        </div>
+      <div
+        className={cn(
+          "flex items-center h-[var(--spacing-topbar)] border-b border-border shrink-0 px-5",
+          collapsed && "justify-center"
+        )}
+      >
         {!collapsed && <span className="font-semibold text-text-primary text-sm">SiteForge</span>}
       </div>
 
@@ -186,10 +188,7 @@ export function MobileDrawer({ open, onClose, variant = "dashboard" }: MobileDra
         className="absolute left-0 top-0 bottom-0 w-[var(--spacing-sidebar)] bg-bg-card border-r"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 px-5 h-[var(--spacing-topbar)] border-b shrink-0">
-          <div className="w-8 h-8 rounded-[var(--radius-input)] bg-accent flex items-center justify-center">
-            <span className="text-white font-bold text-sm">SF</span>
-          </div>
+        <div className="flex items-center px-5 h-[var(--spacing-topbar)] border-b shrink-0">
           <span className="font-semibold text-text-primary text-sm">SiteForge</span>
         </div>
         <nav className="py-4 px-3">

@@ -39,9 +39,6 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-bg-base px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-[var(--radius-card)] bg-accent flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-lg">SF</span>
-          </div>
           <h1 className="text-2xl font-bold text-text-primary">{"\u767b\u5165 SiteForge"}</h1>
           <p className="text-sm text-text-secondary mt-1">{"\u958b\u59cb\u6253\u9020\u4f60\u7684\u54c1\u724c\u5b98\u7db2"}</p>
         </div>
