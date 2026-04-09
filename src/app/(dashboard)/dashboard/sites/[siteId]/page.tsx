@@ -10,7 +10,7 @@ import { useToast } from "@/components/ui/toast";
 import { createClient } from "@/lib/supabase/client";
 import type { Site, Page } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
-import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink, FileText } from "lucide-react";
+import { Plus, Pencil, Trash2, ExternalLink, FileText } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
@@ -95,7 +95,6 @@ export default function SiteDetailPage() {
       <Shell title={"\u627e\u4e0d\u5230\u7ad9\u53f0"}>
         <p className="text-text-secondary">{"\u8a72\u7ad9\u53f0\u4e0d\u5b58\u5728\u6216\u5df2\u88ab\u522a\u9664"}</p>
         <Button variant="secondary" className="mt-4" onClick={() => router.push("/dashboard")}>
-          <ArrowLeft className="w-4 h-4" />
           {"\u8fd4\u56de"}
         </Button>
       </Shell>
@@ -109,7 +108,6 @@ export default function SiteDetailPage() {
           href="/dashboard"
           className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary transition-colors mb-4"
         >
-          <ArrowLeft className="w-4 h-4" />
           {"\u8fd4\u56de\u7ad9\u53f0\u5217\u8868"}
         </Link>
         <div className="flex items-center justify-between">

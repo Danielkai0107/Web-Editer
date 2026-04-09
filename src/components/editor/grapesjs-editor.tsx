@@ -993,7 +993,7 @@ export default function GrapesEditor({
               href={`/dashboard/sites/${siteId}`}
               className="text-sm text-text-secondary hover:text-text-primary transition-colors mr-2"
             >
-              {"\u2190 \u8fd4\u56de"}
+              {"返回"}
             </a>
             <div className="h-5 w-px bg-border mx-1" />
             <button onClick={handleUndo} className="p-2 rounded-lg hover:bg-bg-card-elevated transition-colors" title="Undo">

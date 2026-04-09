@@ -32,7 +32,7 @@ export function Topbar({ title, sidebarCollapsed, onMenuClick }: TopbarProps) {
       <div className="ml-auto flex items-center gap-2">
         <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-success-bg text-xs font-medium text-emerald-700">
           <Shield className="w-3.5 h-3.5" />
-          <span>\u5b89\u5168\u9023\u7dda</span>
+          <span>{"安全連線"}</span>
         </div>
       </div>
     </header>
